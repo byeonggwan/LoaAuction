@@ -1,20 +1,14 @@
 package com.example.auction;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.MediaType;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 
-@Service
-public class LostarkApiService {
-    private WebClient webClient;
-
-    @Autowired
-    public LostarkApiService(WebClient webClient) {
-        this.webClient = webClient;
-    }
+@Component
+@RequiredArgsConstructor
+public class LostarkApi {
+    private final WebClient webClient;
 
     public void getOptions() {
         Flux<String> request = webClient.get()
