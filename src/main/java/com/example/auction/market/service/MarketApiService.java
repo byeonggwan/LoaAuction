@@ -5,12 +5,15 @@ import com.example.auction.market.domain.MarketCategory;
 import com.example.auction.market.domain.MarketItem;
 import com.example.auction.market.repository.MarketCategoryRepository;
 import com.example.auction.market.repository.MarketItemRepository;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -25,45 +28,53 @@ public class MarketApiService {
     private final MarketApi marketApi;
     private final ObjectMapper objectMapper;
 
-    public void saveCategories() {
-        marketApi.getOptions().subscribe(string -> {
-            try {
-                // TODO: string 이 예외일시 처리 필요
-                JsonNode jsonNode = objectMapper.readTree(string);
-                List<MarketCategory> categories = parseCategories(jsonNode);
-                marketCategoryRepository.saveAll(categories);
-            }
-            catch (Exception e) {
-                e.printStackTrace();
-            }
-        });
+    public Mono<Void> updateAll() {
+        return updateCategories()
+                .flatMapMany(Flux::fromIterable)
+                .flatMap(this::updateCategoryTotalCount)
+                .collectList()
+                .doOnNext(marketCategoryRepository::saveAll)
+                .flatMap(__ -> updateItems())
+                .then();
     }
 
-    public void updateCategoryTotalCount() {
-        List<MarketCategory> categoryList = marketCategoryRepository.findAll();
-        for (MarketCategory category : categoryList) {
-            marketApi.postItem(createPostBody(category.getId(), 1)).subscribe(string -> {
-                try {
-                    JsonNode jsonNode = objectMapper.readTree(string);
-                    Integer totalCount = jsonNode.get("TotalCount").asInt();
-                    category.updateTotalCount(totalCount);
-                    marketCategoryRepository.save(category);
-                }
-                catch (Exception e) {
-                    e.printStackTrace();
-                }
-            });
-        }
+    private Mono<List<MarketCategory>> updateCategories() {
+        return marketApi.getOptions()
+                .map(string -> {
+                   try {
+                       JsonNode jsonNode = objectMapper.readTree(string);
+                       return parseCategories(jsonNode);
+                   }
+                   catch (Exception e) {
+                       e.printStackTrace();
+                       return Collections.emptyList();
+                   }
+                });
     }
 
-    public void postItems() {
-        List<MarketCategory> categoryList = marketCategoryRepository.findAll();
-        for (MarketCategory category : categoryList) {
-            asyncGetItemsByCategory(category).subscribe(items -> {
-                marketItemRepository.saveAll(items);
-            });
-        }
+    private Mono<MarketCategory> updateCategoryTotalCount(MarketCategory category) {
+        return marketApi.postItem(createPostBody(category.getId(), 1))
+                .map(string -> {
+                  try {
+                      JsonNode jsonNode = objectMapper.readTree(string);
+                      Integer totalCount = jsonNode.get("TotalCount").asInt();
+                      category.updateTotalCount(totalCount);
+                      return category;
+                  }
+                  catch (Exception e) {
+                      e.printStackTrace();
+                      return null;
+                  }
+                })
+                .filter(Objects::nonNull);
+    }
 
+
+    private Mono<Void> updateItems() {
+        return Flux.fromIterable(marketCategoryRepository.findAll())
+                .flatMap(category -> asyncGetItemsByCategory(category)
+                        .doOnNext(items -> marketItemRepository.saveAll(items)))
+                .then();
     }
 
     private Mono<List<MarketItem>> asyncGetItemsByCategory(MarketCategory category) {
