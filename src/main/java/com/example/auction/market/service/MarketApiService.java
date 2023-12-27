@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+// TODO: 오류처리, 테스트, 상수 사용 고려, 로깅 디테일
 @Service
 @RequiredArgsConstructor
 public class MarketApiService {
@@ -30,15 +31,19 @@ public class MarketApiService {
 
     public Mono<Void> updateAll() {
         return updateCategories()
-                .flatMapMany(Flux::fromIterable)
-                .flatMap(this::updateCategoryTotalCount)
-                .collectList()
-                .doOnNext(marketCategoryRepository::saveAll)
                 .flatMap(__ -> updateItems())
                 .then();
     }
 
     private Mono<List<MarketCategory>> updateCategories() {
+        return getCategories()
+                .flatMapMany(Flux::fromIterable)
+                .flatMap(this::updateTotalCount)
+                .collectList()
+                .doOnNext(marketCategoryRepository::saveAll);
+    }
+
+    private Mono<List<MarketCategory>> getCategories() {
         return marketApi.getOptions()
                 .map(string -> {
                    try {
@@ -52,7 +57,7 @@ public class MarketApiService {
                 });
     }
 
-    private Mono<MarketCategory> updateCategoryTotalCount(MarketCategory category) {
+    private Mono<MarketCategory> updateTotalCount(MarketCategory category) {
         return marketApi.postItem(createPostBody(category.getId(), 1))
                 .map(string -> {
                   try {
