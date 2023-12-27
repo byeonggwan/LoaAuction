@@ -7,7 +7,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 @Controller
 @RequiredArgsConstructor
 public class MainController {
-    private final LostarkApiService lostarkApiService;
 
     @GetMapping("/")
     public String index() {

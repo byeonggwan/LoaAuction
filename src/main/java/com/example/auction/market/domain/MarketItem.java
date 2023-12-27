@@ -20,4 +20,16 @@ public class MarketItem {
     @ManyToOne
     @JoinColumn(name="category_id")
     private MarketCategory category;
+
+    public MarketItem() {
+
+    }
+
+    public MarketItem(Integer id, String name, String grade, String icon, MarketCategory marketCategory) {
+        this.id = id;
+        this.name = name;
+        this.grade = grade;
+        this.icon = icon;
+        this.category = marketCategory;
+    }
 }

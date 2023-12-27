@@ -6,6 +6,7 @@
   - GET /markets/options, /auctions/options --ID-> GET /markets/items/{itemId}, POST /auctions/items
 - [] 주요 품목의 정보 양식에 맞춰 DB를 설계한다.
   - 새로운 아이템이 나올 수 있으므로 이를 고려하여 설계한다.
+  - CategoryCode, PageNo(1~없을때까지) -> post -> MarketItem -> Repository -> Database
 - [] API 호출해서 DB에 스케쥴링(cron)으로 저장할 수 있도록 한다.
   - [] 일단 저장할 수 있어야 한다.
   - ex) 5분마다 '최상급 오레하'의 가격을 가져와 저장한다.
