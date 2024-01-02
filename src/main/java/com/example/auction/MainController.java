@@ -12,7 +12,7 @@ public class MainController {
 
     @GetMapping("/")
     public String index() {
-        marketApiService.updateAll().subscribe();
+        marketApiService.insertItemsDailyLog().subscribe();
         return "index";
     }
 }

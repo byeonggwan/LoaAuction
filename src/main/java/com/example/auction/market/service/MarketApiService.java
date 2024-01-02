@@ -3,12 +3,18 @@ package com.example.auction.market.service;
 import com.example.auction.market.api.MarketApi;
 import com.example.auction.market.domain.MarketCategory;
 import com.example.auction.market.domain.MarketItem;
+import com.example.auction.market.domain.MarketItemDailyLog;
 import com.example.auction.market.repository.MarketCategoryRepository;
+import com.example.auction.market.repository.MarketItemDailyLogRepository;
 import com.example.auction.market.repository.MarketItemRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.math.BigDecimal;
+import java.sql.Date;
+import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -26,6 +32,7 @@ import reactor.core.publisher.Mono;
 public class MarketApiService {
     private final MarketCategoryRepository marketCategoryRepository;
     private final MarketItemRepository marketItemRepository;
+    private final MarketItemDailyLogRepository marketItemDailyLogRepository;
     private final MarketApi marketApi;
     private final ObjectMapper objectMapper;
 
@@ -33,6 +40,44 @@ public class MarketApiService {
         return updateCategories()
                 .flatMap(__ -> updateItems())
                 .then();
+    }
+
+    public Mono<Void> insertItemsDailyLog() {
+        List<Integer> categoryIds = Arrays.asList(40000, 50000, 60000, 70000, 90000);
+        List<MarketItem> items = marketItemRepository.findByCategory_IdIn(categoryIds);
+
+        Flux<MarketItem> itemFlux = Flux.fromIterable(items);
+
+        return itemFlux
+                .concatMap(item -> Mono.just(item)
+                        .delayElement(Duration.ofSeconds(1)) // 1초 간격으로 요청
+                        .flatMap(this::getItemDailyLog))
+                .collectList()
+                .doOnNext(logs -> {
+                    List<MarketItemDailyLog> flatLogs = logs.stream()
+                            .flatMap(List::stream)
+                            .collect(Collectors.toList());
+
+                    marketItemDailyLogRepository.saveAll(flatLogs);
+                })
+                .then();
+    }
+
+    private Mono<List<MarketItemDailyLog>> getItemDailyLog(MarketItem item) {
+        return marketApi.getItemById(item.getId())
+                .map(string -> {
+                    try {
+                        JsonNode jsonNode = objectMapper.readTree(string).get(0);
+                        List<MarketItemDailyLog> dailyLog = parseItemDailyLog(item, jsonNode);
+                        // TODO: 예시
+                        return dailyLog.subList(1, 2);
+                    }
+                    catch (Exception e) {
+                        e.printStackTrace();
+                        // here
+                        return Collections.emptyList();
+                    }
+                });
     }
 
     private Mono<List<MarketCategory>> updateCategories() {
@@ -132,6 +177,20 @@ public class MarketApiService {
         }
 
         return categories;
+    }
+
+    private List<MarketItemDailyLog> parseItemDailyLog(MarketItem item, JsonNode jsonNode) {
+        List<MarketItemDailyLog> logs = new ArrayList<>();
+        for (JsonNode logNode : jsonNode.get("Stats")) {
+            Date date = Date.valueOf(logNode.get("Date").asText());
+            BigDecimal avgPrice = new BigDecimal(logNode.get("AvgPrice").asText());
+            Integer tradeCount = logNode.get("TradeCount").asInt();
+
+            MarketItemDailyLog itemDailyLog = new MarketItemDailyLog(item, date, avgPrice, tradeCount);
+            logs.add(itemDailyLog);
+        }
+
+        return logs;
     }
 
     private Map<String, Object> createPostBody(Integer categoryCode, Integer pageNo) {

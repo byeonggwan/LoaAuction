@@ -1,5 +1,6 @@
 package com.example.auction.market.domain;
 
+import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -11,14 +12,18 @@ import java.sql.Date;
 
 @Entity
 public class MarketItemDailyLog {
-    @Id
-    private Integer id;
-
-    @ManyToOne
-    @JoinColumn(name = "item_id")
-    private MarketItem marketItem;
-
-    private Date date;
+    @EmbeddedId
+    private MarketItemDailyLogId id;
     private BigDecimal avgPrice;
     private Integer tradeCount;
+
+    public MarketItemDailyLog() {
+
+    }
+
+    public MarketItemDailyLog(MarketItem marketItem, Date date, BigDecimal avgPrice, Integer tradeCount) {
+        this.id = new MarketItemDailyLogId(marketItem, date);
+        this.avgPrice = avgPrice;
+        this.tradeCount = tradeCount;
+    }
 }
