@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -35,6 +36,12 @@ public class MarketApiService {
     private final MarketItemDailyLogRepository marketItemDailyLogRepository;
     private final MarketApi marketApi;
     private final ObjectMapper objectMapper;
+
+    @Scheduled(cron = "0 0 14 * * ?")
+    public void scheduledTask() {
+        System.out.println("TEST");
+        insertItemsDailyLog();
+    }
 
     public Mono<Void> updateAll() {
         return updateCategories()
@@ -91,30 +98,30 @@ public class MarketApiService {
     private Mono<List<MarketCategory>> getCategories() {
         return marketApi.getOptions()
                 .map(string -> {
-                   try {
-                       JsonNode jsonNode = objectMapper.readTree(string);
-                       return parseCategories(jsonNode);
-                   }
-                   catch (Exception e) {
-                       e.printStackTrace();
-                       return Collections.emptyList();
-                   }
+                    try {
+                        JsonNode jsonNode = objectMapper.readTree(string);
+                        return parseCategories(jsonNode);
+                    }
+                    catch (Exception e) {
+                        e.printStackTrace();
+                        return Collections.emptyList();
+                    }
                 });
     }
 
     private Mono<MarketCategory> updateTotalCount(MarketCategory category) {
         return marketApi.postItem(createPostBody(category.getId(), 1))
                 .map(string -> {
-                  try {
-                      JsonNode jsonNode = objectMapper.readTree(string);
-                      Integer totalCount = jsonNode.get("TotalCount").asInt();
-                      category.updateTotalCount(totalCount);
-                      return category;
-                  }
-                  catch (Exception e) {
-                      e.printStackTrace();
-                      return null;
-                  }
+                    try {
+                        JsonNode jsonNode = objectMapper.readTree(string);
+                        Integer totalCount = jsonNode.get("TotalCount").asInt();
+                        category.updateTotalCount(totalCount);
+                        return category;
+                    }
+                    catch (Exception e) {
+                        e.printStackTrace();
+                        return null;
+                    }
                 })
                 .filter(Objects::nonNull);
     }
