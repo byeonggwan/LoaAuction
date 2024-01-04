@@ -40,7 +40,7 @@ public class MarketApiService {
     @Scheduled(cron = "0 0 14 * * ?")
     public void scheduledTask() {
         System.out.println("TEST");
-        insertItemsDailyLog();
+        insertItemsDailyLog().subscribe();
     }
 
     public Mono<Void> updateAll() {

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Market Index</title>
+  <style>
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: center;
+    }
+
+    img {
+      display: block;
+      margin: 0 auto;
+    }
+
+    header {
+      text-align: right;
+      margin-bottom: 20px;
+    }
+
+    a {
+      text-decoration: none;
+      color: inherit;
+    }
+  </style>
+</head>
+<body>
+<header>
+  <a href="/">홈</a>
+</header>
+<h1>거래소 아이템 목록</h1>
+<table>
+  <thead>
+  <tr>
+    <th>아이콘</th>
+    <th>이름</th>
+    <th>평균가 (골드)</th>
+    <th>거래량</th>
+  </tr>
+  </thead>
+  <tbody>
+  <tr th:each="marketItem : ${marketItems}">
+    <td>
+      <a th:href="@{/market/{itemId}(itemId=${marketItem.id})}">
+        <img th:src="${marketItem.icon}" alt="Icon" style="width: 50px; height: 50px;"/>
+      </a>
+    </td>
+    <td>
+      <a th:href="@{/market/{itemId}(itemId=${marketItem.id})}" th:text="${marketItem.name}"></a>
+    </td>
+    <td th:text="${#numbers.formatDecimal(marketItem.avgPrice, 1, 1)}"></td>
+    <td th:text="${marketItem.getTradeCount()}"></td>
+  </tr>
+  </tbody>
+</table>
+</body>
+</html>
