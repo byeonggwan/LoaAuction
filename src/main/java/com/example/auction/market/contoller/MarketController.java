@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 public class MarketController {
     private final MarketService marketService;
 
-    // TODO: 페이지네이션
+    // TODO: 페이지네이션, 서칭.
     @GetMapping("")
     public String marketIndex(Model model) {
         List<MarketItemDTO> marketItemSummary = marketService.getMarketItemSummary();

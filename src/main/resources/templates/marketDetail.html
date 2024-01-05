@@ -66,9 +66,9 @@
   </thead>
   <tbody>
   <tr th:each="log : ${marketItemDetail.dailyLogs}">
-    <td th:text="${#dates.format(log.date, 'yyyy-MM-dd')}"></td>
+    <td th:text="${#dates.format(log.date, 'yyyy-MM-dd EEE')}"></td>
     <td th:text="${#numbers.formatDecimal(log.avgPrice, 1, 1)}"></td>
-    <td th:text="${log.tradeCount}"></td>
+    <td th:text="${#numbers.formatInteger(log.tradeCount, 3, 'COMMA')}"></td>
   </tr>
   </tbody>
 </table>

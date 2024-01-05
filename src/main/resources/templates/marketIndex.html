@@ -17,6 +17,14 @@
       text-align: center;
     }
 
+    thead {
+      background-color: #f2f2f2;
+    }
+
+    tbody tr:hover {
+      background-color: #f5f5f5;
+    }
+
     img {
       display: block;
       margin: 0 auto;
@@ -30,6 +38,38 @@
     a {
       text-decoration: none;
       color: inherit;
+    }
+
+    [class^="grade-"] {
+      font-weight: bold;
+    }
+
+    .grade-common {
+      color: rgb(33, 33, 33);
+    }
+
+    .grade-uncommon {
+      color: rgb(110, 195, 0);
+    }
+
+    .grade-rare {
+      color: rgb(0, 180, 255);
+    }
+
+    .grade-epic {
+      color: rgb(190, 0, 255);
+    }
+
+    .grade-legendary {
+      color: rgb(243, 147, 3);
+    }
+
+    .grade-mythic {
+      color: rgb(255, 100, 0);
+    }
+
+    .grade-esther {
+      color: deepskyblue;
     }
   </style>
 </head>
@@ -55,10 +95,13 @@
       </a>
     </td>
     <td>
-      <a th:href="@{/market/{itemId}(itemId=${marketItem.id})}" th:text="${marketItem.name}"></a>
+      <a th:href="@{/market/{itemId}(itemId=${marketItem.id})}"
+         th:text="${marketItem.name}"
+         th:class="'grade-' + ${@thymeleafUtil.translateGrade(marketItem.grade)}">
+      </a>
     </td>
     <td th:text="${#numbers.formatDecimal(marketItem.avgPrice, 1, 1)}"></td>
-    <td th:text="${marketItem.getTradeCount()}"></td>
+    <td th:text="${#numbers.formatInteger(marketItem.tradeCount, 3, 'COMMA')}"></td>
   </tr>
   </tbody>
 </table>
